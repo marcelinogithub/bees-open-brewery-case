@@ -3,8 +3,8 @@ import os
 from pyspark.sql import SparkSession, functions as F
 
 
-# Lê a Silver (Parquet particionado) e gera o agregado:
-# contagem de breweries por (country, state, brewery_type)
+# Read the silver (Parquet) and agregate:
+# count of beweries per (country, state, brewery_type)
 
 def _spark():
     if os.name == "nt":
@@ -36,7 +36,7 @@ def run(silver_root: str, lake_root: str):
 
     out = gold_root(lake_root)
     (
-        agg.repartition(1)      # facilita inspecionar o arquivo
+        agg.repartition(1)     
            .write
            .mode("overwrite")
            .parquet(out)

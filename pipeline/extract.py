@@ -2,17 +2,21 @@
 import requests
 import time
 
-# Este módulo é responsável por se conectar à Open Brewery DB e buscar dados
-# de cervejarias página por página, com tentativas de retry em caso de falha.
+"""
+This module is responsible for connecting to the Open Brewery DB API and
+retrieving brewery data page by page. It implements pagination with retries
+and exponential backoff to ensure resilience against temporary network or API
+errors.
+"""
 
 API_BASE = "https://api.openbrewerydb.org/v1"
-PER_PAGE = 200        # limite máximo suportado pela API
-TIMEOUT = 30          # tempo máximo de espera em segundos
+PER_PAGE = 200        # Maximum page size supported by the API
+TIMEOUT = 30          # Request timeout in seconds
 
 def fetch_page(page: int, retries: int = 3, backoff_factor: float = 1.5):
     """
-    Busca uma única página de breweries e retorna como lista de dicts.
-    Faz retries automáticos com backoff exponencial em caso de falhas temporárias.
+    Fetches a single page of breweries and returns it as a list of dictionaries.
+    Includes automatic retries with exponential backoff in case of transient errors.
     """
     for attempt in range(retries):
         try:
@@ -32,8 +36,8 @@ def fetch_page(page: int, retries: int = 3, backoff_factor: float = 1.5):
 
 def paginate_breweries(max_pages: int = 1000, sleep_secs: float = 0.1):
     """
-    Faz chamadas consecutivas à API, página por página,
-    até acabar os resultados ou atingir o limite de páginas.
+    Iterates through all brewery pages from the API until no more results
+    are returned or the maximum page limit is reached. Yields one page at a time.
     """
     for page in range(1, max_pages + 1):
         rows = fetch_page(page)

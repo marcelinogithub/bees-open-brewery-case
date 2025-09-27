@@ -11,7 +11,7 @@ from pipeline.dq import run as dq_run
 
 
 class BronzeTask(luigi.Task):
-    """Extrai da API e grava NDJSON na Bronze."""
+    """Extract from API and save NDJSON in Bronze Layer."""
     retries = 2
 
     def output(self):
@@ -24,7 +24,7 @@ class BronzeTask(luigi.Task):
 
 @requires(BronzeTask)
 class SilverTask(luigi.Task):
-    """Transforma Bronze em Silver (Parquet particionado)."""
+    """Transform into parquet (particion)."""
     retries = 2
 
     def output(self):
@@ -39,7 +39,7 @@ class SilverTask(luigi.Task):
 
 @requires(SilverTask)
 class GoldTask(luigi.Task):
-    """Agrega Silver para gerar Gold."""
+    """Agregate data to save in Gold Layer."""
     retries = 2
 
     def output(self):
@@ -53,7 +53,11 @@ class GoldTask(luigi.Task):
 
 @requires(GoldTask)
 class DQTask(luigi.Task):
-    """Valida o Gold. Falha se não houver linhas ou schema suspeito."""
+    """Fails the pipeline if:
+      - No rows are found in the Gold dataset.
+      - The schema is missing required columns.
+      - Any invalid values (null/negative counts) are detected.
+    Produces a _SUCCESS_DQ flag if all checks pass."""
     retries = 1
 
     def output(self):

@@ -2,8 +2,14 @@
 import os
 from pyspark.sql import SparkSession
 
-# DQ simples para o Gold: garante linhas > 0, colunas obrigatórias
-# e ausência de brewery_count nulo/negativo. Config "Windows-friendly".
+"""
+This module performs basic Data Quality (DQ) validation on the Gold layer.
+It checks that:
+- The Gold dataset has at least the expected number of rows.
+- All required columns are present.
+- No null or negative values exist in 'brewery_count'.
+It is configured to run smoothly on Windows (sets HADOOP_HOME if needed).
+"""
 
 def _spark():
     if os.name == "nt":

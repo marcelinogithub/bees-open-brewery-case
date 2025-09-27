@@ -3,11 +3,14 @@ import os
 from pyspark.sql import SparkSession, functions as F
 from pipeline.bronze import LAKE_ROOT
 
-# Este módulo lê o arquivo NDJSON da camada bronze e gera a camada silver
-# em formato Parquet, com as colunas normalizadas e particionadas por país/estado.
-
+"""
+This module reads the NDJSON file from the Bronze layer and generates
+the Silver layer in Parquet format. It applies schema normalization,
+column casting, and partitions the data by country and state to
+enable more efficient analytical queries.
+"""
 def _spark():
-    # Garante variáveis no processo (importante quando orquestrado)
+    
     if os.name == "nt":
         os.environ.setdefault("HADOOP_HOME", r"C:\hadoop")
         os.environ["PATH"] = r"C:\hadoop\bin;" + os.environ.get("PATH", "")
@@ -16,7 +19,7 @@ def _spark():
         SparkSession.builder
         .appName("silver-breweries")
         .config("spark.sql.session.timeZone", "UTC")
-        # --- Windows-friendly: evita uso da lib nativa do Hadoop ---
+        # --- Windows-friendly ---
         .config("spark.hadoop.io.native.lib.available", "false")
         .config("spark.hadoop.fs.file.impl", "org.apache.hadoop.fs.RawLocalFileSystem")
         .config("spark.hadoop.hadoop.home.dir", os.environ.get("HADOOP_HOME", r"C:\hadoop"))
@@ -31,10 +34,10 @@ def run(input_ndjson: str):
     """Processa o arquivo NDJSON e grava em formato parquet particionado."""
     spark = _spark()
 
-    # Lê o NDJSON em DataFrame
+    # read NDJSON in DataFrame
     df = spark.read.json(input_ndjson)
 
-    # Seleciona e normaliza colunas
+    
     df2 = (
         df.select(
             F.col("id").cast("string"),
@@ -52,11 +55,11 @@ def run(input_ndjson: str):
         .withColumn("brewery_type", F.lower(F.col("brewery_type")))
     )
 
-    # Escreve particionado por country/state
+    # partition by country and state
     out = silver_root()
     (
         df2
-        .repartition(1, "country", "state")  # junta registros por partição para demos pequenas
+        .repartition(1, "country", "state")  
         .write
         .mode("overwrite")
         .partitionBy("country", "state")
